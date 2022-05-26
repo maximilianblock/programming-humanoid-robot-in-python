@@ -33,7 +33,6 @@ class AngleInterpolationAgent(PIDAgent):
                  sync_mode=True):
         super(AngleInterpolationAgent, self).__init__(simspark_ip, simspark_port, teamname, player_id, sync_mode)
         self.keyframes = ([], [], [])
-        self.offset=0#added to track how much time has passed since first think cycle, since perception.time doesnt start at 0
 
     def think(self, perception):
         target_joints = self.angle_interpolation(self.keyframes, perception)
@@ -44,8 +43,10 @@ class AngleInterpolationAgent(PIDAgent):
         target_joints = {}
         # YOUR CODE HERE
         
-        if(self.offset == 0):
-            self.offset = perception.time
+        if 'offset' not in globals():
+            global offset
+            offset = perception.time
+        
             
         names, times, keys = keyframes
         
@@ -59,7 +60,7 @@ class AngleInterpolationAgent(PIDAgent):
             for j in range(len(xp)):
                 fp.append(keys[i][j][0])
             
-            target_joints[names[i]] = np.interp(perception.time-self.offset,xp,fp)
+            target_joints[names[i]] = np.interp(perception.time-offset,xp,fp)
         
         return target_joints
 
