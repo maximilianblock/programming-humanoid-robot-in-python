@@ -33,6 +33,9 @@ class AngleInterpolationAgent(PIDAgent):
                  sync_mode=True):
         super(AngleInterpolationAgent, self).__init__(simspark_ip, simspark_port, teamname, player_id, sync_mode)
         self.keyframes = ([], [], [])
+        self.offset = 0
+        self.animation_not_running = True
+        
 
     def think(self, perception):
         target_joints = self.angle_interpolation(self.keyframes, perception)
@@ -41,9 +44,7 @@ class AngleInterpolationAgent(PIDAgent):
         return super(AngleInterpolationAgent, self).think(perception)
     
     def calculate_offset(self,perception):#added to calculate offset
-        if 'offset' not in globals():
-            global offset
-        offset = perception.time
+        self.offset = perception.time
 
     def angle_interpolation(self, keyframes, perception):
         target_joints = {}
@@ -53,13 +54,10 @@ class AngleInterpolationAgent(PIDAgent):
         if len(names) == 0:
             return target_joints
         
-        if 'animation_not_running' not in globals(): 
-            global animation_not_running
-            animation_not_running = True
             
-        if(animation_not_running):
+        if(self.animation_not_running):
             self.calculate_offset(perception)
-            animation_not_running = False
+            self.animation_not_running = False
         
             
         
@@ -67,7 +65,7 @@ class AngleInterpolationAgent(PIDAgent):
         max_time = 0
         for i in range(n):
             xp = times[i]
-            if max_time < np.amax(xp):
+            if max_time < np.amax(xp): # calculate time of last keyframe
                 max_time = np.amax(xp)
                 
             fp = []
@@ -75,14 +73,15 @@ class AngleInterpolationAgent(PIDAgent):
             for j in range(len(xp)):
                 fp.append(keys[i][j][0])
             
-            target_joints[names[i]] = np.interp(perception.time-offset,xp,fp)
-            if perception.time-offset > max_time:
-                animation_not_running = True
-                self.keyframes = ([], [], [])# deletes keyframes after animation is done
+            target_joints[names[i]] = np.interp(perception.time-self.offset,xp,fp)
+            
+        if perception.time-self.offset > max_time: # check if last keyframe is done
+            self.animation_not_running = True
+            self.keyframes = ([], [], [])# deletes keyframes after animation is done
             
         return target_joints
 
 if __name__ == '__main__':
     agent = AngleInterpolationAgent()
-    agent.keyframes = hello()  # CHANGE DIFFERENT KEYFRAMES
+    agent.keyframes = leftBackToStand()  # CHANGE DIFFERENT KEYFRAMES
     agent.run()
