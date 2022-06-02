@@ -34,7 +34,7 @@ class PIDController(object):
         self.e1 = np.zeros(size)
         self.e2 = np.zeros(size)
         # ADJUST PARAMETERS BELOW
-        delay = 2
+        delay = 1
         self.Kp = 10
         self.Ki = 0.1
         self.Kd = 0.1
@@ -53,7 +53,8 @@ class PIDController(object):
         @return control signal
         '''
         # YOUR CODE HERE
-        e = target - sensor
+        predict =self.y[-1] + self.u * self.dt
+        e = target - (sensor + predict - self.y[0])
         
         self.u =(self.u 
                  + ((self.Kp + (self.Ki*self.dt) + (self.Kd/self.dt)) * e) 

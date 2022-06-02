@@ -22,7 +22,7 @@
 
 from pid import PIDAgent
 from keyframes.hello import hello
-#from hello import hello #moved the hello file one folder up since importing it the old way didnt work
+from keyframes.leftBackToStand import leftBackToStand
 import numpy as np
 
 class AngleInterpolationAgent(PIDAgent):
@@ -37,31 +37,49 @@ class AngleInterpolationAgent(PIDAgent):
     def think(self, perception):
         target_joints = self.angle_interpolation(self.keyframes, perception)
         self.target_joints.update(target_joints)
+        self.target_joints['RHipYawPitch'] = self.target_joints['LHipYawPitch']
         return super(AngleInterpolationAgent, self).think(perception)
+    
+    def calculate_offset(self,perception):#added to calculate offset
+        if 'offset' not in globals():
+            global offset
+        offset = perception.time
 
     def angle_interpolation(self, keyframes, perception):
         target_joints = {}
         # YOUR CODE HERE
-        
-        if 'offset' not in globals():
-            global offset
-            offset = perception.time
-        
-            
         names, times, keys = keyframes
         
-        n = len(names)
+        if len(names) == 0:
+            return target_joints
         
+        if 'animation_not_running' not in globals(): 
+            global animation_not_running
+            animation_not_running = True
+            
+        if(animation_not_running):
+            self.calculate_offset(perception)
+            animation_not_running = False
+        
+            
+        
+        n = len(names)
+        max_time = 0
         for i in range(n):
             xp = times[i]
-            
+            if max_time < np.amax(xp):
+                max_time = np.amax(xp)
+                
             fp = []
             
             for j in range(len(xp)):
                 fp.append(keys[i][j][0])
             
             target_joints[names[i]] = np.interp(perception.time-offset,xp,fp)
-        
+            if perception.time-offset > max_time:
+                animation_not_running = True
+                self.keyframes = ([], [], [])# deletes keyframes after animation is done
+            
         return target_joints
 
 if __name__ == '__main__':
