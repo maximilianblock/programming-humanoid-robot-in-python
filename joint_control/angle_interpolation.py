@@ -21,7 +21,7 @@
 
 
 from pid import PIDAgent
-from keyframes import hello
+from keyframes.hello import hello
 #from hello import hello #moved the hello file one folder up since importing it the old way didnt work
 import numpy as np
 
