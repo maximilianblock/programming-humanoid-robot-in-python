@@ -19,11 +19,12 @@ class StandingUpAgent(PostureRecognitionAgent):
 
     def standing_up(self):
         posture = self.posture
-        print(posture)
-        if posture == 'Right':
-            keyframes = rightBellyToStand() #doesnt work
-        else:
-            keyframes = hello()
+        print(posture) #debug
+        if posture == 'Right':                      #posture recoginition deosnt work yet. But he will still stand up.
+            self.keyframes = leftBellyToStand()     # right is actually belly
+        if posture == 'Sit':                        #sit is actually back
+            self.keyframes = leftBackToStand()      #very cheap workaround will fix later
+            
         
 
 
