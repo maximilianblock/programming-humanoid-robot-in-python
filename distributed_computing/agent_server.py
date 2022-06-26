@@ -14,16 +14,37 @@
 # add PYTHONPATH
 import os
 import sys
-import json-rpc
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'kinematics'))
 
 from inverse_kinematics import InverseKinematicsAgent
 
+from xmlrpc.server import SimpleXMLRPCServer 
+import threading
 
 class ServerAgent(InverseKinematicsAgent):
     '''ServerAgent provides RPC service
     '''
     # YOUR CODE HERE
+    
+    def __init__(self):
+        super(ServerAgent,self).__init__()
+        self.server = SimpleXMLRPCServer(("127.0.0.1",8080),allow_none=True)
+        
+        self.server.register_function(self.get_angle)
+        self.server.register_function(self.set_angle)
+        self.server.register_function(self.get_posture)
+        self.server.register_function(self.execute_keyframes)
+        self.server.register_function(self.get_transform)
+        self.server.register_function(self.set_transform)
+        
+        
+        
+        t = self.server.serve_forever
+        
+        self.thread = threading.Thread(target=t)
+        self.thread.daemon = True
+        self.thread.start()
+        print("running")
     
     def get_angle(self, joint_name):
         '''get sensor value of given joint'''
@@ -44,9 +65,7 @@ class ServerAgent(InverseKinematicsAgent):
         '''excute keyframes, note this function is blocking call,
         e.g. return until keyframes are executed
         '''
-        if(self.animation_not_running):
-            self.animation_not_running = False
-            self.keyframes = keyframes
+        self.keyframes = keyframes
         # YOUR CODE HERE
 
     def get_transform(self, name):
